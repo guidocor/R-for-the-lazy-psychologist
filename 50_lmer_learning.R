@@ -2,7 +2,7 @@
 # First we clean the enviroment and load some packages  
 rm(list=ls());gc()
 if (!require('pacman')) install.packages('pacman'); library('pacman') 
-p_load(dplyr, yarrr, Rmisc, afex, MASS, psych, lsmeans, knitr, effects)
+p_load(dplyr, yarrr, Rmisc, afex, MASS, psych, emmeans, knitr, effects)
 options(scipen=20)
 
 # Data taken and MODIFIED 
@@ -11,7 +11,9 @@ df %>% head
 
 # A good compendium of knowledge about LMER : http://www.lrdc.pitt.edu/maplelab/statistics.html
 
-
+# Linear Mixed Models models the variation of a variable grouped in other 
+# (commonly: items and participante)
+# As quick rule of thumb:
 # Fixed part: general effect // between participants
 # Random part: effect of each unit (items, subjects) and will be in (effect | unit) // within participants
 
@@ -40,7 +42,7 @@ df %>% head
 # Constrast will set which kind of comparisons we want to make.
 # You can set contrasts to any factor with 
 # contrasts(df$factor) <- contr.... or instroducing a matrix yourself
-# There are more types than seeing here. 
+# There are more types of constrast than seeing here. Common ones:
 # - Treatment. If you don't specify other, is the default. Compares a reference level with all the other
 # contrasts(df$factor) <- contr.treatment
 # - Effect coding. When you want to see the effect of a binary variable (i.e. sex)
@@ -85,7 +87,7 @@ table(df$stim, df$hemifield)
 table(df$stim, df$style)
 table(df$stim, df$sex)
 
-load("./data/models.Rdata")
+# load("./data/models.Rdata") # I ran the models before the course because they take long long time: ) 
 m.rt.1 <- lmer(rt ~ hemifield * style * sex + (hemifield * style | part) + 
                (hemifield+sex |stim), data = df)
 m.rt.1 %>% summary
@@ -94,6 +96,7 @@ m.rt.2 <- lmer(rt ~ hemifield * style * sex + (hemifield * style | part) +
                  (sex |stim), data = df)
 
 m.rt.2 %>% summary
+# quick plot to see the results via the effects package
 m.rt.2 %>% allEffects %>% plot
  
 # Check:
@@ -103,27 +106,40 @@ m.rt.2 %>% allEffects %>% plot
 # Now we know hos to fit our model with lme4, so we'll try to do with afex::mixed
 # it will give us p-values based on Likehood Ratio Tests
 # more on p values https://www.ssc.wisc.edu/sscc/pubs/MM/MM_TestEffects.html
-
+# !!! it will take long time, go for a coffee, don't worry
 m.response <- mixed(response ~ hemifield * style * sex + (hemifield * style | part) +
                     (hemifield*sex |stim), 
                     data = df, 
                     family = binomial(), method = "LRT", expand_re = TRUE)
 
 m.response
+m.response %>% summary
 
+# Now we can do some post-hoc tests with least square means via emmeans package
+# more info: https://cran.r-project.org/web/packages/emmeans/vignettes/basics.html
+# save(list=ls(), file = "./data/models.Rdata")
 
-# Now we can do some post-hoc tests with least square means
-save(list=ls(), file = "./data/models.Rdata")
+# first we take the categorial variables for which we want the marginal means 
+# via emmeans, then we use pairs to test hypothesis. After that, some ready made plots
+em.style <- emmeans(m.rt.2, "style", type = "response")
+plot(em.style)
+em.hemi <- emmeans(m.rt.2, "hemifield", type = "response")
+plot(em.hemi)
 
+pairs.style <- pairs(em.style)
+pairs.style
+plot(pairs.style)
 
-lsmeans::lsmeans(m.rt.2, "style", type = "response")
-lsmeans::lsmeans(m.rt.2, "hemifield", type = "response")
+# The same but with interactions
 
-# Test over pairs of lsmeans 
-test(pairs(lsmeans::lsmeans(m.rt.2, "hemifield", by = "style")), by = NULL, adjust = "holm")
+em.int <- emmeans(m.rt.2, c("hemifield", "style"), type = "response", adjust = "holm")
+em.int
+plot(em.int)
+pairs.int <- pairs(em.int)
+pairs.int
+plot(pairs.int)
 
-
-
-m.rt <- lmer(rt ~ hemifield * style * sex + (hemifield * style | part) + 
-               (hemifield+sex |stim), data = df)
-summary(m.rt)
+# ! I'm working on plotting things, by the momento 
+# ! you can visit my web page where I uploaded some code
+# ! http://corradi.info/index.php/2018/03/15/plotting-glmer-effects-with-afex-emmeans-in-ggplot2-and-base-r/
+# ! soon will be added more code here 
