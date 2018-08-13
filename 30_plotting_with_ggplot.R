@@ -1,0 +1,154 @@
+#### Script for CREATE A NICE PLOTS ####
+# First we clean the enviroment and load some packages  
+rm(list=ls());gc()
+if (!require('pacman')) install.packages('pacman'); library('pacman') 
+p_load(dplyr, yarrr, Rmisc, ggplot2)
+load("./data/discr_df_clean.RData")
+
+df %>% str
+df %>% head
+
+# TASK:
+# Make and plot summary statistics of our tasks
+# Plot the whole dataset info using a "pirate plot" like
+# plot. We will see and easy and fast example with the 
+# yarrr package and then we will do the same on ggplot2 
+
+# First: a summary of participants means on each condition
+
+# Means for each participant
+df.means <- df %>% group_by(subject_nr, stim_type) %>% 
+  dplyr::summarise(., mean_acc = mean(correct))
+df.means
+# using pirate plot package
+# this is a really nice package, more info on the Yarr book : ) 
+pirateplot(mean_acc ~ stim_type, df.means, inf.method = "ci",
+           main = "a type stimuli mean accuracy",
+           ylab = "Accuracy", xlab = "Stim type"
+)
+
+
+
+# We want to graph the difference between tasks. 
+# We have a within measures design, so we remove the between participant variation
+# with the  Morey method trough the Rmisc package 
+# check http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/
+df.summary <- Rmisc::summarySEwithin(df.means, idvar = "subject_nr", 
+                                  measurevar = "mean_acc", withinvars = "stim_type")
+# this is our summary data frame
+# we will take the confidence intervals information 
+# from it
+df.summary %>% head
+
+
+# We need first of all to customize our plot. 
+# there is a lot of info an tutorials to do that.
+# Sincererly, I always use the same and when something is 
+# not as I want... I check the specific part on internet 
+# remember: is really difficult to master a huge platform 
+# but is easy to handle little questions and solve them 
+theme_set(theme_bw())
+my_theme <- theme(panel.grid.major.x = element_blank(),
+                  panel.grid.minor.x= element_blank(),
+                  panel.background = element_blank(),
+                  panel.border = element_blank(),
+                  strip.text.x = element_text(size=14), strip.text.y = element_text(size=16),
+                  strip.background = element_rect(colour="black"),
+                  axis.text.x = element_text(color="black", size=14),
+                  axis.text.y = element_text(color="black", size=14),
+                  axis.title.x = element_text(face="bold", size=18),
+                  axis.title.y = element_text(face="bold",size=18),
+                  axis.ticks = element_blank(),
+                  legend.title = element_text(size=14), legend.text = element_text(size = 14),
+                  plot.title = element_text(vjust = 1.3, face="bold", size=20),
+                  plot.margin = unit(c(.5, .5, .5, .5), "cm")
+)
+
+# Remember the things learnt in the teaching script : ) 
+p1 = ggplot(df.means, aes(x=stim_type, y = mean_acc)) + 
+  # mapping the means of each participant
+  geom_jitter(aes(col=stim_type), width = 0.2, alpha = 0.5) + 
+  # adding the confidence intervals from the summary
+  geom_crossbar(data = df.summary, aes(x=stim_type, ymin = mean_acc-ci, 
+                                       ymax=mean_acc+ci, fill = stim_type, alpha = 0.4 )) + 
+  xlab(" ") + ylab("Accuracy") +
+  ggtitle("Mean accuracy by type") +
+  # removing the legend and adding our theme 
+  my_theme + theme(legend.position="none") 
+p1
+
+
+# Then we want to know about the response times 
+# Means for each participant
+df.means.rt <- df %>% group_by(subject_nr, stim_type, correct) %>% 
+  dplyr::summarise(., mean_rt = mean(rt), median_rt = median(rt))
+# Response times by correct or incorrect answer
+df.means.rt
+
+# Now we can plot and check if participants where faster to 
+# answer correct or incorrectly 
+
+# by means
+p2 = ggplot(df.means.rt, aes(x=mean_rt, fill = factor(correct) )) + 
+  geom_histogram(bins = 10, alpha=0.5, position="identity") + facet_wrap(~stim_type) +
+  ggtitle("Means RT by type")
+p2
+
+# by mnedians
+p3 = ggplot(df.means.rt, aes(x=median_rt, fill = factor(correct) )) + 
+  geom_histogram(bins = 10, alpha=0.5, position="identity") + facet_wrap(~stim_type) +
+  ggtitle("Median RT by type")
+p3 
+
+
+# Now we want a different type of plot. 
+# Till the momento we worked with means of each participant
+# but now we want to know the whole distribution of each participant
+
+# In this data frame we want to know for each parcipant if they were 
+# faster in correct or incorrect answers
+# in this case the participant is a variable 
+# and we will get an individual confidence interval
+# Get the mean of each participant in both types.
+
+tab = summarySEwithin(data = df, measurevar = "rt",
+                      withinvars = c( "subject_nr", "stim_type"))
+tab %>% head
+# this is just for ordering the data by the mean in all conditions
+# by this we will get an ordered plot  
+tab =  tab %>% dplyr::group_by(subject_nr) %>%
+  dplyr::summarise(mean_rt = mean(rt)) %>%
+  left_join(tab, . )
+
+# Ordering by mean RT
+tab = arrange(tab, desc(mean_rt), subject_nr)
+
+
+pd <- position_dodge(0.8) # make points to not overlap
+p4 = ggplot(tab, aes(x = reorder(subject_nr, -mean_rt), # reorder function is wonderful
+                     y = rt, group = stim_type, col = stim_type)) +
+  geom_point(position=pd) +
+  # make the plot to have the x axis on the y one
+  coord_flip() + 
+  ylab("RT") + xlab("Participant") + ggtitle("Response times") +
+  geom_linerange(aes(ymin= rt-se, ymax= rt+se), size = 1, position = pd) +
+  my_theme +
+  theme(axis.text.y = element_blank(),
+        legend.position = c(.9,.8))
+p4
+
+
+
+# Ok, now we can look at the plot and have an overall idea of how the 
+# stim_type responses relate to response times : )  
+
+# now we can save the plots
+ggsave(filename = "./plots/accuracy_by_type.png", plot = p1,
+       width = 7, height = 5, units="in" )
+
+ggsave(filename = "./plots/means_RT_by_type.png", plot = p2,
+       width = 7, height = 5, units="in" )
+
+
+ggsave(filename = "./plots/RT_by_type_and_part.png", plot = p4,
+       width = 5, height = 8, units="in" )

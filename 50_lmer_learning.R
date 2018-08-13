@@ -139,7 +139,7 @@ pairs.int <- pairs(em.int)
 pairs.int
 plot(pairs.int)
 
-# ! I'm working on plotting things, by the momento 
+# ! I'm working on plotting things, by the moment
 # ! you can visit my web page where I uploaded some code
 # ! http://corradi.info/index.php/2018/03/15/plotting-glmer-effects-with-afex-emmeans-in-ggplot2-and-base-r/
 # ! soon will be added more code here 

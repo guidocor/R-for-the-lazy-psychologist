@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1534153389635.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "83E0B79F",
+    "lastKnownWriteTime" : 1534154895,
+    "last_content_update" : 1534154895175,
+    "path" : "C:/Users/guido/Dropbox/R_course/R-for-the-lazy-psychologist/30_plotting_with_ggplot.R",
+    "project_path" : "30_plotting_with_ggplot.R",
+    "properties" : {
+        "cursorPosition" : "154,0",
+        "scrollLine" : "132",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
