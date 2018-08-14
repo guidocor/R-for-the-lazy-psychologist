@@ -59,7 +59,9 @@ my_theme <- theme(panel.grid.major.x = element_blank(),
                   axis.title.x = element_text(face="bold", size=18),
                   axis.title.y = element_text(face="bold",size=18),
                   axis.ticks = element_blank(),
-                  legend.title = element_text(size=14), legend.text = element_text(size = 14),
+                  legend.position = c(1,1),
+                  legend.title = element_text(size=14), 
+                  legend.text = element_text(size = 14),
                   plot.title = element_text(vjust = 1.3, face="bold", size=20),
                   plot.margin = unit(c(.5, .5, .5, .5), "cm")
 )
@@ -91,13 +93,20 @@ df.means.rt
 # by means
 p2 = ggplot(df.means.rt, aes(x=mean_rt, fill = factor(correct) )) + 
   geom_histogram(bins = 10, alpha=0.5, position="identity") + facet_wrap(~stim_type) +
+  scale_fill_discrete(name = "Answer", labels = c("Incorrect", "Correct")) + 
+  ylab(" ") +
+  xlab("Mean response time") +
   ggtitle("Means RT by type")
 p2
 
 # by mnedians
 p3 = ggplot(df.means.rt, aes(x=median_rt, fill = factor(correct) )) + 
   geom_histogram(bins = 10, alpha=0.5, position="identity") + facet_wrap(~stim_type) +
-  ggtitle("Median RT by type")
+  ggtitle("Median RT by type") +
+  scale_fill_discrete(name = "Answer", labels = c("Incorrect", "Correct")) +
+  ylab("Median response time") +
+  xlab(" ")
+  
 p3 
 
 
@@ -130,11 +139,13 @@ p4 = ggplot(tab, aes(x = reorder(subject_nr, -mean_rt), # reorder function is wo
   geom_point(position=pd) +
   # make the plot to have the x axis on the y one
   coord_flip() + 
-  ylab("RT") + xlab("Participant") + ggtitle("Response times") +
+  ylab("Response time") + xlab("Participant") + ggtitle("Response times by participant") +
   geom_linerange(aes(ymin= rt-se, ymax= rt+se), size = 1, position = pd) +
+  
   my_theme +
   theme(axis.text.y = element_blank(),
-        legend.position = c(.9,.8))
+        legend.position = c(.9,.8)) +
+  scale_color_discrete(name = "Stimuli type") 
 p4
 
 
@@ -152,3 +163,4 @@ ggsave(filename = "./plots/means_RT_by_type.png", plot = p2,
 
 ggsave(filename = "./plots/RT_by_type_and_part.png", plot = p4,
        width = 5, height = 8, units="in" )
+
