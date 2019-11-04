@@ -1,4 +1,4 @@
-# R for the lazy psychocologist 
+# R for the lazy psychologist 
 
 This is the material for a course that I gave at Universidad de las Islas Baleares (Spain). The course aim is to convert a hard word (data mananing, cleaning, analysing) in a easy thing. Is called 'for the lazy psychologist' because one has to be lazy enough to not to do anything that an automated script can. In this course we start with a lot of single comma separated values files (outputs from experimental psychology software) and we end with a linear mixed effect model analysis of them. 
 
